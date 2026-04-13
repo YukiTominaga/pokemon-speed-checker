@@ -5,29 +5,8 @@ import PokemonSlot from "@/components/PokemonSlot";
 import SpeedRanking from "@/components/SpeedRanking";
 import { PokemonInfo } from "@/lib/pokeapi";
 import { SpeedPattern, NatureModifier } from "@/lib/speedCalc";
-
-function ToggleButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-        active
-          ? "bg-purple-600 text-white shadow-sm"
-          : "bg-white text-gray-500 border border-gray-200 hover:border-gray-300"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
+import { Toggle } from "@/components/ui/toggle";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Home() {
   const [mine, setMine] = useState<(PokemonInfo | null)[]>([null, null]);
@@ -38,7 +17,7 @@ export default function Home() {
   const [oppNatures, setOppNatures] = useState<NatureModifier[]>(["neutral", "neutral"]);
 
   // フィールド状態
-  const [trickRoom, setTrickRoom] = useState(false);
+  const [trickroom, setTrickroom] = useState(false);
   const [myTailwind, setMyTailwind] = useState(false);
   const [oppTailwind, setOppTailwind] = useState(false);
 
@@ -117,36 +96,54 @@ export default function Home() {
         </div>
 
         {/* フィールド状態 */}
-        <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 space-y-3">
-          <h2 className="text-sm font-bold text-gray-700">フィールド状態</h2>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-bold text-gray-700">フィールド状態</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="flex flex-wrap gap-2">
+              {/* トリックルーム */}
+              <Toggle
+                variant="outline"
+                pressed={trickroom}
+                onPressedChange={setTrickroom}
+                className="flex items-center gap-1.5 px-3 py-2 h-auto rounded-xl text-sm font-semibold data-[state=on]:bg-purple-600 data-[state=on]:text-white data-[state=on]:border-purple-600"
+              >
+                <span className="text-base">🔮</span> トリックルーム
+              </Toggle>
 
-          <div className="flex flex-wrap gap-2">
-            {/* トリックルーム */}
-            <ToggleButton active={trickRoom} onClick={() => setTrickRoom((v) => !v)}>
-              <span className="text-base">🔮</span> トリックルーム
-            </ToggleButton>
+              {/* 自分の追い風 */}
+              <Toggle
+                variant="outline"
+                pressed={myTailwind}
+                onPressedChange={setMyTailwind}
+                className="flex items-center gap-1.5 px-3 py-2 h-auto rounded-xl text-sm font-semibold data-[state=on]:bg-purple-600 data-[state=on]:text-white data-[state=on]:border-purple-600"
+              >
+                <span
+                  className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                    myTailwind ? "bg-white" : "bg-blue-400"
+                  }`}
+                />
+                自分の追い風
+              </Toggle>
 
-            {/* 自分の追い風 */}
-            <ToggleButton active={myTailwind} onClick={() => setMyTailwind((v) => !v)}>
-              <span
-                className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                  myTailwind ? "bg-white" : "bg-blue-400"
-                }`}
-              />
-              自分の追い風
-            </ToggleButton>
-
-            {/* 相手の追い風 */}
-            <ToggleButton active={oppTailwind} onClick={() => setOppTailwind((v) => !v)}>
-              <span
-                className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                  oppTailwind ? "bg-white" : "bg-red-400"
-                }`}
-              />
-              相手の追い風
-            </ToggleButton>
-          </div>
-        </section>
+              {/* 相手の追い風 */}
+              <Toggle
+                variant="outline"
+                pressed={oppTailwind}
+                onPressedChange={setOppTailwind}
+                className="flex items-center gap-1.5 px-3 py-2 h-auto rounded-xl text-sm font-semibold data-[state=on]:bg-purple-600 data-[state=on]:text-white data-[state=on]:border-purple-600"
+              >
+                <span
+                  className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                    oppTailwind ? "bg-white" : "bg-red-400"
+                  }`}
+                />
+                相手の追い風
+              </Toggle>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* 結果 */}
         {hasAny ? (
@@ -157,7 +154,7 @@ export default function Home() {
             oppPatterns={oppPatterns}
             myNatures={myNatures}
             oppNatures={oppNatures}
-            trickRoom={trickRoom}
+            trickroom={trickroom}
             myTailwind={myTailwind}
             oppTailwind={oppTailwind}
           />

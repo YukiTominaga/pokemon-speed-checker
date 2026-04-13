@@ -1,57 +1,31 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { CHAMPIONS_ROSTER, ChampionsPokemon } from "@/data/championsRoster";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onSelect: (p: ChampionsPokemon) => void;
-  onClose: () => void;
   /** 既に選択済みのポケモン名（ハイライト表示用） */
   selectedName?: string;
 }
 
-export default function PokemonPicker({ onSelect, onClose, selectedName }: Props) {
-  const overlayRef = useRef<HTMLDivElement>(null);
-
-  // オーバーレイクリックで閉じる
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === overlayRef.current) onClose();
-  };
-
-  // Escape キーで閉じる
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [onClose]);
-
-  // モーダル表示中はスクロールを抑制
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, []);
-
+export default function PokemonPicker({ open, onOpenChange, onSelect, selectedName }: Props) {
   return (
-    <div
-      ref={overlayRef}
-      onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-    >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full max-w-md max-h-[80vh] flex flex-col p-0 gap-0">
         {/* ヘッダー */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="font-bold text-gray-800">ポケモンを選ぶ</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
-        </div>
+        <DialogHeader className="px-5 py-4 border-b border-gray-100">
+          <DialogTitle className="font-bold text-gray-800">ポケモンを選ぶ</DialogTitle>
+        </DialogHeader>
 
         {/* ポケモングリッド */}
         <div className="overflow-y-auto p-4">
@@ -61,15 +35,14 @@ export default function PokemonPicker({ onSelect, onClose, selectedName }: Props
               return (
                 <button
                   key={p.name}
-                  onClick={() => { onSelect(p); onClose(); }}
-                  className={`
-                    flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all
-                    hover:bg-blue-50 hover:border-blue-300 hover:scale-105
-                    ${isSelected
+                  onClick={() => { onSelect(p); onOpenChange(false); }}
+                  className={cn(
+                    "flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all",
+                    "hover:bg-blue-50 hover:border-blue-300 hover:scale-105",
+                    isSelected
                       ? "border-blue-500 bg-blue-50 ring-2 ring-blue-300"
                       : "border-gray-200 bg-white"
-                    }
-                  `}
+                  )}
                 >
                   <Image
                     src={p.spriteUrl}
@@ -90,7 +63,7 @@ export default function PokemonPicker({ onSelect, onClose, selectedName }: Props
             })}
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
