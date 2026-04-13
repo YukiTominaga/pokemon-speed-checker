@@ -2,13 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import {
-  formatEnName,
-  getAllPokemon,
-  getPokemonInfo,
-  PokemonInfo,
-  PokemonListItem,
-} from "@/lib/pokeapi";
+import { CHAMPIONS_ROSTER, ChampionsPokemon } from "@/data/championsRoster";
+import { PokemonInfo } from "@/lib/pokeapi";
 import { calcSpeed } from "@/lib/speedCalc";
 
 interface Props {
@@ -19,32 +14,26 @@ interface Props {
 
 export default function PokemonSlot({ label, team, onChange }: Props) {
   const [query, setQuery] = useState("");
-  const [allList, setAllList] = useState<PokemonListItem[]>([]);
-  const [suggestions, setSuggestions] = useState<PokemonListItem[]>([]);
+  const [suggestions, setSuggestions] = useState<ChampionsPokemon[]>([]);
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<PokemonInfo | null>(null);
-  const [fetching, setFetching] = useState(false);
+  const [selected, setSelected] = useState<ChampionsPokemon | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Load full Pokémon list once
+  // 日本語名でフィルタリング
   useEffect(() => {
-    getAllPokemon().then(setAllList);
-  }, []);
-
-  // Filter suggestions on query change
-  useEffect(() => {
-    if (query.length < 2) {
+    if (query.length === 0) {
       setSuggestions([]);
       setOpen(false);
       return;
     }
-    const q = query.toLowerCase().replace(/\s+/g, "-");
-    const hits = allList.filter((p) => p.name.includes(q)).slice(0, 10);
+    const hits = CHAMPIONS_ROSTER.filter((p) =>
+      p.jaName.includes(query)
+    );
     setSuggestions(hits);
     setOpen(hits.length > 0);
-  }, [query, allList]);
+  }, [query]);
 
-  // Close dropdown when clicking outside
+  // 外クリックでドロップダウンを閉じる
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
@@ -53,17 +42,11 @@ export default function PokemonSlot({ label, team, onChange }: Props) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const handleSelect = async (item: PokemonListItem) => {
-    setQuery(formatEnName(item.name));
+  const handleSelect = (p: ChampionsPokemon) => {
+    setQuery(p.jaName);
     setOpen(false);
-    setFetching(true);
-    try {
-      const info = await getPokemonInfo(item.name);
-      setSelected(info);
-      onChange(info);
-    } finally {
-      setFetching(false);
-    }
+    setSelected(p);
+    onChange(p as PokemonInfo);
   };
 
   const handleClear = () => {
@@ -100,14 +83,16 @@ export default function PokemonSlot({ label, team, onChange }: Props) {
         )}
       </div>
 
-      {/* Search input */}
+      {/* 検索インプット */}
       <div ref={containerRef} className="relative">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => suggestions.length > 0 && setOpen(true)}
-          placeholder="ポケモン名（英語）を入力..."
+          onFocus={() => {
+            if (query.length > 0 && suggestions.length > 0) setOpen(true);
+          }}
+          placeholder="ポケモン名を入力（例：リザードン）"
           className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
         />
 
@@ -119,37 +104,27 @@ export default function PokemonSlot({ label, team, onChange }: Props) {
                 onMouseDown={() => handleSelect(p)}
                 className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100"
               >
-                {formatEnName(p.name)}
+                {p.jaName}
+                <span className="ml-2 text-xs text-gray-400">
+                  基礎素早さ {p.baseSpeed}
+                </span>
               </li>
             ))}
           </ul>
         )}
       </div>
 
-      {/* Loading */}
-      {fetching && (
-        <p className="text-center text-gray-400 text-xs mt-4 animate-pulse">
-          読み込み中...
-        </p>
-      )}
-
-      {/* Selected Pokémon */}
-      {selected && !fetching && (
+      {/* 選択済みポケモン表示 */}
+      {selected && (
         <div className="mt-3 flex items-center gap-3">
-          {selected.spriteUrl ? (
-            <Image
-              src={selected.spriteUrl}
-              alt={selected.jaName}
-              width={64}
-              height={64}
-              className="[image-rendering:pixelated]"
-              unoptimized
-            />
-          ) : (
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xs">
-              ?
-            </div>
-          )}
+          <Image
+            src={selected.spriteUrl}
+            alt={selected.jaName}
+            width={64}
+            height={64}
+            className="[image-rendering:pixelated]"
+            unoptimized
+          />
           <div>
             <p className="font-bold text-base">{selected.jaName}</p>
             <p className="text-xs text-gray-400 mb-1">
