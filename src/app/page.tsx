@@ -4,7 +4,7 @@ import { useState } from "react";
 import PokemonSlot from "@/components/PokemonSlot";
 import SpeedRanking from "@/components/SpeedRanking";
 import { PokemonInfo } from "@/lib/pokeapi";
-import { SpeedPattern } from "@/lib/speedCalc";
+import { SpeedPattern, NatureModifier } from "@/lib/speedCalc";
 
 function ToggleButton({
   active,
@@ -34,6 +34,8 @@ export default function Home() {
   const [opp, setOpp] = useState<(PokemonInfo | null)[]>([null, null]);
   const [myPatterns, setMyPatterns] = useState<SpeedPattern[]>(["min", "min"]);
   const [oppPatterns, setOppPatterns] = useState<SpeedPattern[]>(["min", "min"]);
+  const [myNatures, setMyNatures] = useState<NatureModifier[]>(["neutral", "neutral"]);
+  const [oppNatures, setOppNatures] = useState<NatureModifier[]>(["neutral", "neutral"]);
 
   // フィールド状態
   const [trickRoom, setTrickRoom] = useState(false);
@@ -51,6 +53,12 @@ export default function Home() {
   };
   const updateOppPattern = (i: number) => (p: SpeedPattern) => {
     setOppPatterns((prev) => { const n = [...prev]; n[i] = p; return n; });
+  };
+  const updateMyNature = (i: number) => (nat: NatureModifier) => {
+    setMyNatures((prev) => { const n = [...prev]; n[i] = nat; return n; });
+  };
+  const updateOppNature = (i: number) => (nat: NatureModifier) => {
+    setOppNatures((prev) => { const n = [...prev]; n[i] = nat; return n; });
   };
 
   const hasAny = mine.some(Boolean) || opp.some(Boolean);
@@ -81,7 +89,9 @@ export default function Home() {
                 label={`ポケモン ${i + 1}`}
                 team="mine"
                 pattern={myPatterns[i]}
+                nature={myNatures[i]}
                 onPatternChange={updateMyPattern(i)}
+                onNatureChange={updateMyNature(i)}
                 onChange={updateMine(i)}
               />
             ))}
@@ -97,7 +107,9 @@ export default function Home() {
                 label={`ポケモン ${i + 1}`}
                 team="opp"
                 pattern={oppPatterns[i]}
+                nature={oppNatures[i]}
                 onPatternChange={updateOppPattern(i)}
+                onNatureChange={updateOppNature(i)}
                 onChange={updateOpp(i)}
               />
             ))}
@@ -143,6 +155,8 @@ export default function Home() {
             oppPokemon={opp}
             myPatterns={myPatterns}
             oppPatterns={oppPatterns}
+            myNatures={myNatures}
+            oppNatures={oppNatures}
             trickRoom={trickRoom}
             myTailwind={myTailwind}
             oppTailwind={oppTailwind}

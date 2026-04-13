@@ -1,30 +1,44 @@
 /**
  * Pokémon speed stat calculator (Level 50, 31 IVs fixed)
  *
- * 無振り (min): 0 EV, neutral nature
- * 全振り (max): 252 EV, +speed nature (×1.1)
+ * 無振り (min): 0 EV
+ * 全振り (max): 252 EV
+ * 性格補正 (nature): plus ×1.1 / neutral ×1.0 / minus ×0.9
  */
 export type SpeedPattern = "min" | "max";
+export type NatureModifier = "plus" | "neutral" | "minus";
 
 export const PATTERN_LABEL: Record<SpeedPattern, string> = {
   min: "無振り",
   max: "全振り",
 };
 
+export const NATURE_MULTIPLIER: Record<NatureModifier, number> = {
+  plus: 1.1,
+  neutral: 1.0,
+  minus: 0.9,
+};
+
 /**
  * Calculate speed stat at Level 50.
  * Formula: floor((floor((base×2 + IV + floor(EV/4)) × Lv/100) + 5) × nature)
  */
-export function calcSpeed(base: number, pattern: SpeedPattern): number {
+export function calcSpeed(
+  base: number,
+  pattern: SpeedPattern,
+  nature: NatureModifier = "neutral"
+): number {
   const iv = 31;
   const lv = 50;
+  const mult = NATURE_MULTIPLIER[nature];
 
   if (pattern === "min") {
-    return Math.floor((Math.floor((base * 2 + iv) * lv) / 100) + 5);
+    const raw = Math.floor(((base * 2 + iv) * lv) / 100) + 5;
+    return Math.floor(raw * mult);
   } else {
     const evContrib = Math.floor(252 / 4); // 63
     const raw = Math.floor(((base * 2 + iv + evContrib) * lv) / 100) + 5;
-    return Math.floor(raw * 1.1);
+    return Math.floor(raw * mult);
   }
 }
 
@@ -35,9 +49,10 @@ export function calcSpeed(base: number, pattern: SpeedPattern): number {
 export function calcEffectiveSpeed(
   base: number,
   pattern: SpeedPattern,
+  nature: NatureModifier,
   tailwind: boolean
 ): number {
-  const speed = calcSpeed(base, pattern);
+  const speed = calcSpeed(base, pattern, nature);
   return tailwind ? speed * 2 : speed;
 }
 

@@ -4,14 +4,16 @@ import { useState } from "react";
 import Image from "next/image";
 import { ChampionsPokemon } from "@/data/championsRoster";
 import { PokemonInfo } from "@/lib/pokeapi";
-import { calcSpeed, SpeedPattern, PATTERN_LABEL } from "@/lib/speedCalc";
+import { calcSpeed, SpeedPattern, NatureModifier, PATTERN_LABEL } from "@/lib/speedCalc";
 import PokemonPicker from "./PokemonPicker";
 
 interface Props {
   label: string;
   team: "mine" | "opp";
   pattern: SpeedPattern;
+  nature: NatureModifier;
   onPatternChange: (p: SpeedPattern) => void;
+  onNatureChange: (n: NatureModifier) => void;
   onChange: (info: PokemonInfo | null) => void;
 }
 
@@ -19,7 +21,9 @@ export default function PokemonSlot({
   label,
   team,
   pattern,
+  nature,
   onPatternChange,
+  onNatureChange,
   onChange,
 }: Props) {
   const [selected, setSelected] = useState<ChampionsPokemon | null>(null);
@@ -41,8 +45,13 @@ export default function PokemonSlot({
   const bg = isMine ? "bg-blue-50" : "bg-red-50";
   const labelColor = isMine ? "text-blue-700" : "text-red-700";
   const emptyBg = isMine ? "bg-blue-100/60" : "bg-red-100/60";
+  const activeEv = isMine ? "bg-blue-500 text-white" : "bg-red-500 text-white";
 
-  const effectiveSpeed = selected ? calcSpeed(selected.baseSpeed, pattern) : null;
+  const effectiveSpeed = selected ? calcSpeed(selected.baseSpeed, pattern, nature) : null;
+
+  const handleNatureClick = (clicked: "plus" | "minus") => {
+    onNatureChange(nature === clicked ? "neutral" : clicked);
+  };
 
   return (
     <>
@@ -92,9 +101,9 @@ export default function PokemonSlot({
           )}
         </div>
 
-        {/* 努力値トグル＋実数値（選択後に表示） */}
+        {/* 努力値・性格補正トグル＋実数値（選択後に表示） */}
         {selected && (
-          <div className="mt-3 flex items-center justify-between">
+          <div className="mt-3 flex items-center gap-2">
             {/* 無振り / 全振り トグル */}
             <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs font-semibold">
               {(["min", "max"] as SpeedPattern[]).map((p) => (
@@ -102,11 +111,7 @@ export default function PokemonSlot({
                   key={p}
                   onClick={() => onPatternChange(p)}
                   className={`px-3 py-1.5 transition-colors ${
-                    pattern === p
-                      ? isMine
-                        ? "bg-blue-500 text-white"
-                        : "bg-red-500 text-white"
-                      : "bg-white text-gray-500 hover:bg-gray-50"
+                    pattern === p ? activeEv : "bg-white text-gray-500 hover:bg-gray-50"
                   }`}
                 >
                   {PATTERN_LABEL[p]}
@@ -114,12 +119,32 @@ export default function PokemonSlot({
               ))}
             </div>
 
-            {/* 実数値 */}
-            <span
-              className={`text-sm font-bold ${
-                isMine ? "text-blue-700" : "text-red-700"
+            {/* 性格補正 +/- ボタン */}
+            <button
+              onClick={() => handleNatureClick("plus")}
+              className={`w-7 h-7 rounded-lg text-xs font-bold border transition-colors ${
+                nature === "plus"
+                  ? "bg-orange-500 text-white border-orange-500"
+                  : "bg-white text-gray-500 border-gray-200 hover:border-orange-300 hover:text-orange-500"
               }`}
+              title="性格補正＋（×1.1）"
             >
+              ＋
+            </button>
+            <button
+              onClick={() => handleNatureClick("minus")}
+              className={`w-7 h-7 rounded-lg text-xs font-bold border transition-colors ${
+                nature === "minus"
+                  ? "bg-sky-500 text-white border-sky-500"
+                  : "bg-white text-gray-500 border-gray-200 hover:border-sky-300 hover:text-sky-500"
+              }`}
+              title="性格補正－（×0.9）"
+            >
+              －
+            </button>
+
+            {/* 実数値 */}
+            <span className={`ml-auto text-sm font-bold ${isMine ? "text-blue-700" : "text-red-700"}`}>
               実数値 {effectiveSpeed}
             </span>
           </div>

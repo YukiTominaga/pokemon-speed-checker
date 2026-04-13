@@ -4,6 +4,7 @@ import Image from "next/image";
 import { PokemonInfo } from "@/lib/pokeapi";
 import {
   SpeedPattern,
+  NatureModifier,
   PATTERN_LABEL,
   calcEffectiveSpeed,
   compareEffective,
@@ -15,6 +16,8 @@ interface Props {
   oppPokemon: (PokemonInfo | null)[];
   myPatterns: SpeedPattern[];
   oppPatterns: SpeedPattern[];
+  myNatures: NatureModifier[];
+  oppNatures: NatureModifier[];
   trickRoom: boolean;
   myTailwind: boolean;
   oppTailwind: boolean;
@@ -24,6 +27,7 @@ interface SlotEntry {
   info: PokemonInfo;
   team: "mine" | "opp";
   pattern: SpeedPattern;
+  nature: NatureModifier;
   rawSpeed: number;
   effectiveSpeed: number;
 }
@@ -34,28 +38,47 @@ const VERDICT_LABEL: Record<Verdict, { text: string; color: string }> = {
   tie:    { text: "同速 ＝", color: "text-yellow-600 font-bold" },
 };
 
+const NATURE_BADGE: Record<NatureModifier, { label: string; className: string } | null> = {
+  plus:    { label: "性格＋", className: "bg-orange-100 text-orange-600" },
+  minus:   { label: "性格－", className: "bg-sky-100 text-sky-600" },
+  neutral: null,
+};
+
 export default function SpeedRanking({
   myPokemon,
   oppPokemon,
   myPatterns,
   oppPatterns,
+  myNatures,
+  oppNatures,
   trickRoom,
   myTailwind,
   oppTailwind,
 }: Props) {
   // フラット化・null 除去
   const entries: SlotEntry[] = [
-    ...myPokemon.map((p, i) => ({ info: p, team: "mine" as const, pattern: myPatterns[i] })),
-    ...oppPokemon.map((p, i) => ({ info: p, team: "opp" as const, pattern: oppPatterns[i] })),
+    ...myPokemon.map((p, i) => ({
+      info: p,
+      team: "mine" as const,
+      pattern: myPatterns[i],
+      nature: myNatures[i],
+    })),
+    ...oppPokemon.map((p, i) => ({
+      info: p,
+      team: "opp" as const,
+      pattern: oppPatterns[i],
+      nature: oppNatures[i],
+    })),
   ]
-    .filter((e): e is { info: PokemonInfo; team: "mine" | "opp"; pattern: SpeedPattern } =>
-      e.info !== null
+    .filter(
+      (e): e is { info: PokemonInfo; team: "mine" | "opp"; pattern: SpeedPattern; nature: NatureModifier } =>
+        e.info !== null
     )
-    .map(({ info, team, pattern }) => {
+    .map(({ info, team, pattern, nature }) => {
       const tailwind = team === "mine" ? myTailwind : oppTailwind;
-      const rawSpeed = calcEffectiveSpeed(info.baseSpeed, pattern, false);
-      const effectiveSpeed = calcEffectiveSpeed(info.baseSpeed, pattern, tailwind);
-      return { info, team, pattern, rawSpeed, effectiveSpeed };
+      const rawSpeed = calcEffectiveSpeed(info.baseSpeed, pattern, nature, false);
+      const effectiveSpeed = calcEffectiveSpeed(info.baseSpeed, pattern, nature, tailwind);
+      return { info, team, pattern, nature, rawSpeed, effectiveSpeed };
     });
 
   if (entries.length === 0) return null;
@@ -95,6 +118,7 @@ export default function SpeedRanking({
             const isMine = e.team === "mine";
             const hasTailwind = isMine ? myTailwind : oppTailwind;
             const barPct = (e.effectiveSpeed / globalMax) * 100;
+            const natureBadge = NATURE_BADGE[e.nature];
 
             return (
               <div key={`${e.info.id}-${e.team}-${i}`} className="flex items-center gap-3">
@@ -131,6 +155,12 @@ export default function SpeedRanking({
                     <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
                       {PATTERN_LABEL[e.pattern]}
                     </span>
+                    {/* 性格補正バッジ */}
+                    {natureBadge && (
+                      <span className={`text-[11px] px-1.5 py-0.5 rounded font-semibold ${natureBadge.className}`}>
+                        {natureBadge.label}
+                      </span>
+                    )}
                     {/* 追い風バッジ */}
                     {hasTailwind && (
                       <span className="text-[11px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-600 font-semibold">
