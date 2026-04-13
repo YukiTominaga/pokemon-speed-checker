@@ -2,9 +2,14 @@
  * Pokémon speed stat calculator (Level 50, 31 IVs fixed)
  *
  * 無振り (min): 0 EV, neutral nature
- * 最速  (max): 252 EV, +speed nature (×1.1)
+ * 全振り (max): 252 EV, +speed nature (×1.1)
  */
 export type SpeedPattern = "min" | "max";
+
+export const PATTERN_LABEL: Record<SpeedPattern, string> = {
+  min: "無振り",
+  max: "全振り",
+};
 
 /**
  * Calculate speed stat at Level 50.
@@ -23,26 +28,34 @@ export function calcSpeed(base: number, pattern: SpeedPattern): number {
   }
 }
 
-export interface SpeedRange {
-  min: number;
-  max: number;
+/**
+ * Apply field modifiers to a calculated speed stat.
+ * 追い風: ×2
+ */
+export function calcEffectiveSpeed(
+  base: number,
+  pattern: SpeedPattern,
+  tailwind: boolean
+): number {
+  const speed = calcSpeed(base, pattern);
+  return tailwind ? speed * 2 : speed;
 }
 
-export function getSpeedRange(base: number): SpeedRange {
-  return { min: calcSpeed(base, "min"), max: calcSpeed(base, "max") };
-}
-
-export type Verdict = "faster" | "slower" | "ambiguous";
+export type Verdict = "faster" | "slower" | "tie";
 
 /**
- * Compare two Pokémon's speed ranges.
- * Returns verdict from the perspective of Pokémon A:
- *   "faster"    → A's 無振り > B's 最速  (A always outspeeds)
- *   "slower"    → A's 最速  < B's 無振り (A always gets outsped)
- *   "ambiguous" → ranges overlap
+ * Compare two effective speeds considering Trick Room.
+ * Returns verdict from perspective of Pokémon A (does A move first?).
+ *   "faster" → A moves before B
+ *   "slower" → B moves before A
+ *   "tie"    → same speed (coin flip)
  */
-export function compareSpeed(a: SpeedRange, b: SpeedRange): Verdict {
-  if (a.min > b.max) return "faster";
-  if (a.max < b.min) return "slower";
-  return "ambiguous";
+export function compareEffective(
+  speedA: number,
+  speedB: number,
+  trickRoom: boolean
+): Verdict {
+  if (speedA === speedB) return "tie";
+  const aFirst = trickRoom ? speedA < speedB : speedA > speedB;
+  return aFirst ? "faster" : "slower";
 }
