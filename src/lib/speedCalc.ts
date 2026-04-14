@@ -5,12 +5,12 @@
  * 全振り (max): 252 EV
  * 性格補正 (nature): plus ×1.1 / neutral ×1.0 / minus ×0.9
  */
-export type SpeedPattern = "min" | "max";
-export type NatureModifier = "plus" | "neutral" | "minus";
+export type SpeedPattern = 'min' | 'max';
+export type NatureModifier = 'plus' | 'neutral' | 'minus';
 
 export const PATTERN_LABEL: Record<SpeedPattern, string> = {
-  min: "無振り",
-  max: "全振り",
+  min: '無振り',
+  max: '全振り',
 };
 
 export const NATURE_MULTIPLIER: Record<NatureModifier, number> = {
@@ -26,13 +26,13 @@ export const NATURE_MULTIPLIER: Record<NatureModifier, number> = {
 export function calcSpeed(
   base: number,
   pattern: SpeedPattern,
-  nature: NatureModifier = "neutral"
+  nature: NatureModifier = 'neutral'
 ): number {
   const iv = 31;
   const lv = 50;
   const mult = NATURE_MULTIPLIER[nature];
 
-  if (pattern === "min") {
+  if (pattern === 'min') {
     const raw = Math.floor(((base * 2 + iv) * lv) / 100) + 5;
     return Math.floor(raw * mult);
   } else {
@@ -56,7 +56,7 @@ export function calcEffectiveSpeed(
   return tailwind ? speed * 2 : speed;
 }
 
-export type Verdict = "faster" | "slower" | "tie";
+export type Verdict = 'faster' | 'slower' | 'tie';
 
 /**
  * Compare two effective speeds considering Trick Room.
@@ -65,12 +65,8 @@ export type Verdict = "faster" | "slower" | "tie";
  *   "slower" → B moves before A
  *   "tie"    → same speed (coin flip)
  */
-export function compareEffective(
-  speedA: number,
-  speedB: number,
-  trickRoom: boolean
-): Verdict {
-  if (speedA === speedB) return "tie";
+export function compareEffective(speedA: number, speedB: number, trickRoom: boolean): Verdict {
+  if (speedA === speedB) return 'tie';
   const aFirst = trickRoom ? speedA < speedB : speedA > speedB;
-  return aFirst ? "faster" : "slower";
+  return aFirst ? 'faster' : 'slower';
 }
