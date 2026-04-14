@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { ChampionsPokemon } from '@/data/championsRoster';
-import { PokemonInfo } from '@/lib/pokeapi';
 import { calcSpeed, SpeedPattern, NatureModifier, PATTERN_LABEL } from '@/lib/speedCalc';
 import PokemonPicker from './PokemonPicker';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,33 +12,32 @@ import { Badge } from '@/components/ui/badge';
 interface Props {
   label: string;
   team: 'mine' | 'opp';
+  selected: ChampionsPokemon | null;
   pattern: SpeedPattern;
   nature: NatureModifier;
   onPatternChange: (p: SpeedPattern) => void;
   onNatureChange: (n: NatureModifier) => void;
-  onChange: (info: PokemonInfo | null) => void;
+  onChange: (p: ChampionsPokemon | null) => void;
 }
 
 export default function PokemonSlot({
   label,
   team,
+  selected,
   pattern,
   nature,
   onPatternChange,
   onNatureChange,
   onChange,
 }: Props) {
-  const [selected, setSelected] = useState<ChampionsPokemon | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const handleSelect = (p: ChampionsPokemon) => {
-    setSelected(p);
-    onChange(p as PokemonInfo);
+    onChange(p);
   };
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelected(null);
     onChange(null);
   };
 
