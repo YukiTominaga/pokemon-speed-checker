@@ -105,6 +105,14 @@ export default function Home() {
     });
   };
 
+  // ── バトルフェーズでのパーティスロット更新（メガシンカ用） ──────
+  const updateMyPartyAt = (partyIdx: number, pokemon: ChampionsPokemon) => {
+    dispatchMy({ type: 'set_party_slot', index: partyIdx, pokemon });
+  };
+  const updateOppPartyAt = (partyIdx: number, pokemon: ChampionsPokemon) => {
+    dispatchOpp({ type: 'set_party_slot', index: partyIdx, pokemon });
+  };
+
   // ── バトル選出更新ヘルパー ────────────────────────────────────
   const selectMyBattle = (slotIdx: number) => (partyIdx: number) => {
     dispatchMy({ type: 'select_battle', slotIdx, partyIdx });
@@ -269,7 +277,6 @@ export default function Home() {
                     return (
                       <BattleSlot
                         key={`my-battle-${slotIdx}`}
-                        index={slotIdx}
                         team="mine"
                         pokemon={pokemon}
                         partyIndex={partyIdx}
@@ -279,6 +286,7 @@ export default function Home() {
                         otherSelectedIndices={otherIndices}
                         onSelect={selectMyBattle(slotIdx)}
                         onClear={clearMyBattle(slotIdx)}
+                        onPartyChange={updateMyPartyAt}
                         onPatternChange={partyIdx !== null ? updateMyPattern(partyIdx) : () => {}}
                         onNatureChange={partyIdx !== null ? updateMyNature(partyIdx) : () => {}}
                       />
@@ -302,7 +310,6 @@ export default function Home() {
                     return (
                       <BattleSlot
                         key={`opp-battle-${slotIdx}`}
-                        index={slotIdx}
                         team="opp"
                         pokemon={pokemon}
                         partyIndex={partyIdx}
@@ -312,6 +319,7 @@ export default function Home() {
                         otherSelectedIndices={otherIndices}
                         onSelect={selectOppBattle(slotIdx)}
                         onClear={clearOppBattle(slotIdx)}
+                        onPartyChange={updateOppPartyAt}
                         onPatternChange={partyIdx !== null ? updateOppPattern(partyIdx) : () => {}}
                         onNatureChange={partyIdx !== null ? updateOppNature(partyIdx) : () => {}}
                       />

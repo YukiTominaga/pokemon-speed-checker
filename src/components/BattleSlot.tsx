@@ -2,14 +2,13 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { ChampionsPokemon } from '@/data/championsRoster';
+import { ChampionsPokemon, CHAMPIONS_ROSTER } from '@/data/championsRoster';
+import { MEGA_MAP, MEGA_BASE_MAP } from '@/data/megaEvolutions';
 import { calcSpeed, SpeedPattern, NatureModifier, PATTERN_LABEL } from '@/lib/speedCalc';
 import PartyPicker from './PartyPicker';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
-interface Props {
-  index: number;
+export interface BattleSlotProps {
   team: 'mine' | 'opp';
   pokemon: ChampionsPokemon | null;
   partyIndex: number | null;
@@ -19,12 +18,13 @@ interface Props {
   otherSelectedIndices: number[];
   onSelect: (partyIndex: number) => void;
   onClear: () => void;
+  /** パーティスロットのポケモンを直接更新（メガシンカ用） */
+  onPartyChange: (partyIdx: number, pokemon: ChampionsPokemon) => void;
   onPatternChange: (p: SpeedPattern) => void;
   onNatureChange: (n: NatureModifier) => void;
 }
 
 export default function BattleSlot({
-  index,
   team,
   pokemon,
   partyIndex,
@@ -34,9 +34,10 @@ export default function BattleSlot({
   otherSelectedIndices,
   onSelect,
   onClear,
+  onPartyChange,
   onPatternChange,
   onNatureChange,
-}: Props) {
+}: BattleSlotProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const isMine = team === 'mine';
@@ -50,8 +51,28 @@ export default function BattleSlot({
 
   const effectiveSpeed = pokemon ? calcSpeed(pokemon.baseSpeed, pattern, nature) : null;
 
+  // メガ進化オプション
+  const megaOptions = pokemon
+    ? (MEGA_MAP[pokemon.name] ?? []).flatMap(({ name, label }) => {
+        const p = CHAMPIONS_ROSTER.find((r) => r.name === name);
+        return p ? [{ pokemon: p, label }] : [];
+      })
+    : [];
+
+  // もとにもどすボタン
+  const baseName = pokemon ? MEGA_BASE_MAP[pokemon.name] : undefined;
+  const basePokemon = baseName
+    ? (CHAMPIONS_ROSTER.find((p) => p.name === baseName) ?? null)
+    : null;
+
   const handleNatureClick = (clicked: 'plus' | 'minus') => {
     onNatureChange(nature === clicked ? 'neutral' : clicked);
+  };
+
+  // メガ/もどすボタン: パーティスロットを置き換えて battle は同インデックスを維持
+  const handleMegaSwitch = (target: ChampionsPokemon) => {
+    if (partyIndex === null) return;
+    onPartyChange(partyIndex, target);
   };
 
   const hasParty = party.some(Boolean);
@@ -59,97 +80,114 @@ export default function BattleSlot({
   return (
     <>
       <Card className={`border-2 ${border} ${bg}`}>
-        <CardContent className="p-2">
-          {/* ヘッダー行 */}
-          <div className="mb-1 flex items-center justify-between">
-            <span className={`text-[11px] font-bold ${labelColor}`}>選出 {index + 1}</span>
-            {pokemon && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onClear(); }}
-                className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-[9px] text-gray-500 hover:bg-gray-300"
-                aria-label="クリア"
+        <CardContent className="p-1.5">
+          {pokemon ? (
+            <div className="flex items-center gap-1.5">
+              {/* スプライト（クリックで選択変更） */}
+              <div
+                onClick={() => hasParty && setPickerOpen(true)}
+                className={`relative flex-shrink-0 transition-opacity ${hasParty ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed opacity-50'}`}
               >
-                ✕
-              </button>
-            )}
-          </div>
-
-          {/* スプライト＋名前エリア */}
-          <div
-            onClick={() => hasParty && setPickerOpen(true)}
-            className={`transition-opacity ${hasParty ? 'cursor-pointer hover:opacity-90' : 'cursor-not-allowed opacity-50'}`}
-          >
-            {pokemon ? (
-              <div className="flex flex-col items-center gap-0.5">
                 <Image
                   src={pokemon.spriteUrl}
                   alt={pokemon.jaName}
-                  width={56}
-                  height={56}
+                  width={48}
+                  height={48}
                   className="[image-rendering:pixelated]"
                   unoptimized
                 />
-                <p className="w-full text-center text-[11px] font-semibold leading-tight line-clamp-2">
-                  {pokemon.jaName}
-                </p>
-                <p className="text-[10px] text-gray-400">基礎 {pokemon.baseSpeed}</p>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onClear(); }}
+                  className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gray-300 text-[8px] text-gray-600 hover:bg-gray-400"
+                  aria-label="クリア"
+                >
+                  ✕
+                </button>
               </div>
-            ) : (
-              <div className={`flex h-20 flex-col items-center justify-center rounded-lg ${emptyBg}`}>
-                <span className="text-xl opacity-40">＋</span>
-                <span className={`text-[10px] font-medium opacity-60 ${labelColor}`}>
-                  {hasParty ? '選ぶ' : 'パーティ先に'}
-                </span>
-              </div>
-            )}
-          </div>
 
-          {/* EV / 性格補正 / 実数値 */}
-          {pokemon && (
-            <div className="mt-2 space-y-1.5">
-              {/* 無振 / 全振 */}
-              <div className="flex overflow-hidden rounded-md border border-gray-200">
-                {(['min', 'max'] as SpeedPattern[]).map((p) => (
+              {/* 右側：名前・コントロール */}
+              <div className="min-w-0 flex-1 space-y-1">
+                {/* 名前 + 実数値 */}
+                <div className="flex items-baseline justify-between gap-1">
+                  <p className="truncate text-[11px] font-semibold leading-tight">{pokemon.jaName}</p>
+                  <span className={`flex-shrink-0 text-xs font-bold ${isMine ? 'text-blue-700' : 'text-red-700'}`}>
+                    {effectiveSpeed}
+                  </span>
+                </div>
+
+                {/* 無振り/全振り + 性格 */}
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-1 overflow-hidden rounded border border-gray-200">
+                    {(['min', 'max'] as SpeedPattern[]).map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => onPatternChange(p)}
+                        className={`flex-1 py-1.5 text-[11px] font-semibold transition-colors ${
+                          pattern === p ? activeColor : 'bg-white text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        {PATTERN_LABEL[p]}
+                      </button>
+                    ))}
+                  </div>
                   <button
-                    key={p}
-                    onClick={() => onPatternChange(p)}
-                    className={`flex-1 py-1 text-[11px] font-semibold transition-colors ${
-                      pattern === p ? activeColor : 'bg-white text-gray-500 hover:bg-gray-50'
+                    onClick={() => handleNatureClick('plus')}
+                    className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded border text-[11px] font-bold transition-colors ${
+                      nature === 'plus'
+                        ? 'border-orange-500 bg-orange-500 text-white'
+                        : 'border-gray-200 bg-white text-gray-500 hover:border-orange-300 hover:text-orange-500'
                     }`}
+                    title="性格補正＋"
                   >
-                    {PATTERN_LABEL[p]}
+                    ＋
                   </button>
-                ))}
-              </div>
+                  <button
+                    onClick={() => handleNatureClick('minus')}
+                    className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded border text-[11px] font-bold transition-colors ${
+                      nature === 'minus'
+                        ? 'border-sky-500 bg-sky-500 text-white'
+                        : 'border-gray-200 bg-white text-gray-500 hover:border-sky-300 hover:text-sky-500'
+                    }`}
+                    title="性格補正－"
+                  >
+                    －
+                  </button>
+                </div>
 
-              {/* 性格 + 実数値 */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => handleNatureClick('plus')}
-                  className={`flex h-6 w-6 items-center justify-center rounded border text-[11px] font-bold transition-colors ${
-                    nature === 'plus'
-                      ? 'border-orange-500 bg-orange-500 text-white'
-                      : 'border-gray-200 bg-white text-gray-500 hover:border-orange-300 hover:text-orange-500'
-                  }`}
-                  title="性格補正＋"
-                >
-                  ＋
-                </button>
-                <button
-                  onClick={() => handleNatureClick('minus')}
-                  className={`flex h-6 w-6 items-center justify-center rounded border text-[11px] font-bold transition-colors ${
-                    nature === 'minus'
-                      ? 'border-sky-500 bg-sky-500 text-white'
-                      : 'border-gray-200 bg-white text-gray-500 hover:border-sky-300 hover:text-sky-500'
-                  }`}
-                  title="性格補正－"
-                >
-                  －
-                </button>
-                <span className={`ml-auto text-xs font-bold ${isMine ? 'text-blue-700' : 'text-red-700'}`}>
-                  {effectiveSpeed}
-                </span>
+                {/* メガシンカ / もどすボタン */}
+                {megaOptions.length > 0 && (
+                  <div className="flex gap-1.5">
+                    {megaOptions.map(({ pokemon: mega, label }) => (
+                      <button
+                        key={mega.name}
+                        onClick={() => handleMegaSwitch(mega)}
+                        className="flex-1 rounded border border-yellow-400 bg-yellow-50 py-1.5 text-[11px] font-bold text-yellow-700 transition-colors hover:bg-yellow-100 active:bg-yellow-200"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {basePokemon && (
+                  <button
+                    onClick={() => handleMegaSwitch(basePokemon)}
+                    className="w-full rounded border border-gray-300 bg-gray-50 py-1.5 text-[11px] font-bold text-gray-600 transition-colors hover:bg-gray-100"
+                  >
+                    ↩ もどす
+                  </button>
+                )}
               </div>
+            </div>
+          ) : (
+            /* 空スロット */
+            <div
+              onClick={() => hasParty && setPickerOpen(true)}
+              className={`flex items-center justify-center rounded-lg py-3 transition-opacity ${emptyBg} ${hasParty ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed opacity-50'}`}
+            >
+              <span className="text-lg opacity-40">＋</span>
+              <span className={`ml-1 text-[10px] font-medium opacity-60 ${labelColor}`}>
+                {hasParty ? '選ぶ' : 'パーティ先に'}
+              </span>
             </div>
           )}
         </CardContent>
