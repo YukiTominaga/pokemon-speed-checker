@@ -61,9 +61,7 @@ export default function BattleSlot({
 
   // もとにもどすボタン
   const baseName = pokemon ? MEGA_BASE_MAP[pokemon.name] : undefined;
-  const basePokemon = baseName
-    ? (CHAMPIONS_ROSTER.find((p) => p.name === baseName) ?? null)
-    : null;
+  const basePokemon = baseName ? (CHAMPIONS_ROSTER.find((p) => p.name === baseName) ?? null) : null;
 
   const handleNatureClick = (clicked: 'plus' | 'minus') => {
     onNatureChange(nature === clicked ? 'neutral' : clicked);
@@ -97,7 +95,10 @@ export default function BattleSlot({
                   unoptimized
                 />
                 <button
-                  onClick={(e) => { e.stopPropagation(); onClear(); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClear();
+                  }}
                   className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gray-300 text-[8px] text-gray-600 hover:bg-gray-400"
                   aria-label="クリア"
                 >
@@ -109,8 +110,12 @@ export default function BattleSlot({
               <div className="min-w-0 flex-1 space-y-1">
                 {/* 名前 + 実数値 */}
                 <div className="flex items-baseline justify-between gap-1">
-                  <p className="truncate text-[11px] font-semibold leading-tight">{pokemon.jaName}</p>
-                  <span className={`flex-shrink-0 text-xs font-bold ${isMine ? 'text-blue-700' : 'text-red-700'}`}>
+                  <p className="truncate text-[11px] leading-tight font-semibold">
+                    {pokemon.jaName}
+                  </p>
+                  <span
+                    className={`flex-shrink-0 text-xs font-bold ${isMine ? 'text-blue-700' : 'text-red-700'}`}
+                  >
                     {effectiveSpeed}
                   </span>
                 </div>

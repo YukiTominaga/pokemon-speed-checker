@@ -30,9 +30,7 @@ export default function PartySlotMini({ team, selected, onChange }: Props) {
 
   // もとにもどすボタン（メガフォーム選択時）
   const baseName = selected ? MEGA_BASE_MAP[selected.name] : undefined;
-  const basePokemon = baseName
-    ? (CHAMPIONS_ROSTER.find((p) => p.name === baseName) ?? null)
-    : null;
+  const basePokemon = baseName ? (CHAMPIONS_ROSTER.find((p) => p.name === baseName) ?? null) : null;
 
   return (
     <>
@@ -52,7 +50,7 @@ export default function PartySlotMini({ team, selected, onChange }: Props) {
                 className="[image-rendering:pixelated]"
                 unoptimized
               />
-              <span className="w-full text-center text-[11px] font-medium leading-tight text-gray-700 line-clamp-2">
+              <span className="line-clamp-2 w-full text-center text-[11px] leading-tight font-medium text-gray-700">
                 {selected.jaName}
               </span>
               <button
@@ -67,7 +65,9 @@ export default function PartySlotMini({ team, selected, onChange }: Props) {
               </button>
             </div>
           ) : (
-            <div className={`flex h-24 flex-col items-center justify-center gap-1 rounded-[10px] ${emptyBg}`}>
+            <div
+              className={`flex h-24 flex-col items-center justify-center gap-1 rounded-[10px] ${emptyBg}`}
+            >
               <span className={`text-2xl leading-none ${emptyText} opacity-50`}>＋</span>
             </div>
           )}

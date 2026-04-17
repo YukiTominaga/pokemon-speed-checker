@@ -128,16 +128,22 @@ export default function Home() {
   };
 
   // ── SpeedRanking 用データ変換 ─────────────────────────────────
-  const myBattlePokemon = my.battle.map((i) =>
-    i !== null ? (my.party[i] as PokemonInfo) : null
-  );
+  const myBattlePokemon = my.battle.map((i) => (i !== null ? (my.party[i] as PokemonInfo) : null));
   const oppBattlePokemon = opp.battle.map((i) =>
     i !== null ? (opp.party[i] as PokemonInfo) : null
   );
-  const myBattlePatterns = my.battle.map((i) => (i !== null ? myPatterns[i] : ('min' as SpeedPattern)));
-  const oppBattlePatterns = opp.battle.map((i) => (i !== null ? oppPatterns[i] : ('min' as SpeedPattern)));
-  const myBattleNatures = my.battle.map((i) => (i !== null ? myNatures[i] : ('neutral' as NatureModifier)));
-  const oppBattleNatures = opp.battle.map((i) => (i !== null ? oppNatures[i] : ('neutral' as NatureModifier)));
+  const myBattlePatterns = my.battle.map((i) =>
+    i !== null ? myPatterns[i] : ('min' as SpeedPattern)
+  );
+  const oppBattlePatterns = opp.battle.map((i) =>
+    i !== null ? oppPatterns[i] : ('min' as SpeedPattern)
+  );
+  const myBattleNatures = my.battle.map((i) =>
+    i !== null ? myNatures[i] : ('neutral' as NatureModifier)
+  );
+  const oppBattleNatures = opp.battle.map((i) =>
+    i !== null ? oppNatures[i] : ('neutral' as NatureModifier)
+  );
 
   const hasAnyBattle = myBattlePokemon.some(Boolean) || oppBattlePokemon.some(Boolean);
   const hasAnyParty = my.party.some(Boolean) || opp.party.some(Boolean);
@@ -172,9 +178,7 @@ export default function Home() {
             <span>パーティ選出</span>
             <span
               className={`rounded-full px-2 py-0.5 text-xs ${
-                phase === 'party'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-gray-100 text-gray-500'
+                phase === 'party' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
               }`}
             >
               {myPartyCount + oppPartyCount} / 12
@@ -195,9 +199,7 @@ export default function Home() {
             <span>バトル選出</span>
             <span
               className={`rounded-full px-2 py-0.5 text-xs ${
-                phase === 'battle'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-gray-100 text-gray-400'
+                phase === 'battle' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'
               }`}
             >
               {myBattleCount + oppBattleCount} / 4

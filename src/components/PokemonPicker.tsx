@@ -24,9 +24,7 @@ export default function PokemonPicker({ onSelect, onClose, selectedName }: Props
   const q = query.trim();
   const filtered = q
     ? CHAMPIONS_ROSTER.filter(
-        (p) =>
-          p.jaName.includes(q) ||
-          p.name.toLowerCase().includes(q.toLowerCase())
+        (p) => p.jaName.includes(q) || p.name.toLowerCase().includes(q.toLowerCase())
       )
     : CHAMPIONS_ROSTER;
 
